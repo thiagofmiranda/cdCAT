@@ -1,0 +1,138 @@
+---
+title: "Getting Started with cdCAT"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with cdCAT}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(cdCAT)
+```
+
+## Overview
+
+`cdCAT` provides a session-based engine for Cognitive Diagnostic 
+Computerized Adaptive Testing (CD-CAT). It supports DINA, DINO, and 
+GDINA models with multiple item selection criteria and attribute 
+estimation methods.
+
+The typical workflow has four steps:
+
+1. Define the item bank with `cdcat_items()`
+2. Start a session with `CdcatSession$new()`
+3. Loop: select next item → collect response → update session
+4. Extract results with `session$result()`
+
+---
+
+## 1. Defining the Item Bank
+
+The item bank requires a Q-matrix and item parameters.
+The Q-matrix is a binary matrix where rows are items and columns are 
+attributes. An entry of 1 means the item requires that attribute.
+
+```{r items}
+# Q-matrix: 5 items, 2 attributes
+Q <- matrix(c(
+  1, 0,
+  0, 1,
+  1, 0,
+  0, 1,
+  1, 1
+), nrow = 5, ncol = 2, byrow = TRUE)
+
+# DINA model parameters
+items <- cdcat_items(
+  q_matrix = Q,
+  model    = "DINA",
+  slip     = c(0.10, 0.10, 0.15, 0.10, 0.10),
+  guess    = c(0.20, 0.20, 0.15, 0.20, 0.15)
+)
+
+print(items)
+```
+
+---
+
+## 2. Running a CD-CAT Session
+
+```{r session}
+# Start session
+session <- CdcatSession$new(
+  items     = items,
+  method    = "MAP",
+  criterion = "PWKL",
+  min_items = 2L,
+  max_items = 5L,
+  threshold = 0.8
+)
+
+# Simulate responses (1 = correct, 0 = incorrect)
+simulated_responses <- c(1, 1, 0, 1, 0)
+
+repeat {
+  item <- session$next_item()
+  if (item == 0) break
+  session$update(item, simulated_responses[item])
+}
+```
+
+---
+
+## 3. Extracting Results
+
+```{r results}
+res <- session$result()
+
+cat("Estimated profile :", res$alpha_hat, "\n")
+cat("Items administered:", res$administered, "\n")
+cat("Responses         :", res$responses, "\n")
+cat("N items           :", res$n_items, "\n")
+cat("Stop reason       :", res$stop_reason, "\n")
+cat("Posterior         :", round(res$posterior, 3), "\n")
+```
+
+---
+
+## 4. Item Selection Criteria
+
+`cdCAT` supports four adaptive criteria and two non-adaptive options:
+
+| Criterion  | Description                                  |
+|------------|----------------------------------------------|
+| `"PWKL"`   | Posterior-weighted KL divergence (default)   |
+| `"KL"`     | KL divergence from estimated profile         |
+| `"MPWKL"`  | Mutual posterior-weighted KL divergence      |
+| `"SHE"`    | Shannon entropy reduction                    |
+| `"SEQ"`    | Sequential (non-adaptive)                    |
+| `"RANDOM"` | Random selection                             |
+
+---
+
+## 5. Supported Models
+
+```{r models, eval=FALSE}
+# DINO model
+items_dino <- cdcat_items(Q, "DINO", slip = slip, guess = guess)
+
+# GDINA model
+gdina_params <- list(
+  list("0" = 0.1, "1" = 0.9),
+  list("0" = 0.1, "1" = 0.9),
+  list("00" = 0.1, "10" = 0.5, "01" = 0.5, "11" = 0.9)
+)
+items_gdina <- cdcat_items(Q[1:3, ], "GDINA", gdina_params = gdina_params)
+```
+
+---
+
+## 6. Estimation Methods
+
+Three attribute estimation methods are available via the `method` argument:
+
+- `"MAP"` — Maximum A Posteriori (default)
+- `"MLE"` — Maximum Likelihood Estimation
+- `"EAP"` — Expected A Posteriori

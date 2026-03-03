@@ -2,3 +2,7 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^dev$
+^doc$
+^Meta$
+^README\.Rmd$
+^\.github$
