@@ -87,11 +87,19 @@ apply_exposure_control <- function(scores, available, exposure, n_administered) 
   # --- Randomesque regime: all values >= 1
   if (all(exposure >= 1)) {
     k <- n_administered + 1L
-    n <- if (k <= length(exposure) && !is.na(exposure[k])) {
+
+    # Fallback: se já administramos mais itens que o comprimento de exposure
+    if (k > length(exposure)) {
+      return(available[which.max(scores)])
+    }
+
+    # Determinar n (número de top candidatos)
+    n <- if (!is.na(exposure[k])) {
       as.integer(exposure[k])
     } else {
       1L
     }
+
     return(apply_randomesque(scores, available, n))
   }
 
@@ -115,9 +123,8 @@ apply_exposure_control <- function(scores, available, exposure, n_administered) 
 #' @param scores Numeric vector of scores for the candidate items.
 #' @param available Integer vector of global item indices corresponding
 #'   to `scores`.
-#' @param p Numeric vector of acceptance probabilities in `[0, 1]`,
-#'   one per candidate item (same length and order as `scores` and
-#'   `available`).
+#' @param p Numeric vector of acceptance probabilities in [0, 1], one per item in the bank (length J),
+#'   The function extracts probabilities for available items internally.
 #'
 #' @return Integer scalar -- global index of the selected item.
 #'
