@@ -2,22 +2,56 @@
 % Please edit documentation in R/criteria.R
 \name{PWKL_criteria}
 \alias{PWKL_criteria}
-\title{PWKL criterion}
+\title{Posterior-Weighted Kullback–Leibler (PWKL) Criterion}
 \usage{
 PWKL_criteria(item_index, alpha_hat_index, prob_matrix, posterior)
 }
 \arguments{
 \item{item_index}{Integer. Index of the candidate item.}
 
-\item{alpha_hat_index}{Integer. Index of the currently estimated profile.}
+\item{alpha_hat_index}{Integer. Index of the current latent profile estimate.}
 
-\item{prob_matrix}{Matrix J x 2^K of response probabilities.}
+\item{prob_matrix}{Numeric matrix of dimension J x 2^K
+containing item response probabilities.}
 
-\item{posterior}{Numeric vector of posterior probabilities over profiles.}
+\item{posterior}{Numeric vector of posterior probabilities over
+the 2^K latent profiles.}
 }
 \value{
-Numeric scalar.
+Numeric scalar representing the PWKL information value.
 }
 \description{
-Posterior-weighted Kullback-Leibler divergence.
+Computes the posterior-weighted KL information index for a candidate item
+in CD-CAT.
+}
+\details{
+Unlike the standard KL method, this criterion weights each latent profile
+by its current posterior probability rather than assuming equally likely
+latent states.
+
+Let \eqn{\pi_t(\alpha_c)} denote the posterior probability of latent
+profile \eqn{\alpha_c} after \eqn{t} administered items.
+
+The PWKL index for item \eqn{h} is defined as:
+
+\deqn{
+PWKL_h(\hat{\alpha}^{(t)}) =
+\sum_{c=1}^{2^K}
+KL_h(\hat{\alpha}^{(t)} \Vert \alpha_c)
+\pi_t(\alpha_c)
+}
+
+where \eqn{KL_h(\cdot)} represents the KL divergence between
+the conditional response distributions induced by two latent profiles.
+
+This weighting reduces early-stage instability and avoids the implicit
+assumption of uniformly distributed latent states.
+
+Assumptions:
+\itemize{
+\item Correct posterior updating.
+\item Conditional independence of responses.
+}
+
+Computational complexity per candidate item is \eqn{O(2^K)}.
 }

@@ -1,24 +1,64 @@
-#' Create a cdCAT item bank
+#' Create a cdCAT Item Bank
 #'
-#' Builds and validates the item bank object used in CD-CAT sessions.
+#' Constructs and validates the item bank object used in cognitive
+#' diagnosis computerized adaptive testing (CD-CAT) sessions.
+#'
+#' @details
+#' The item bank is defined by a Q-matrix and model-specific item parameters.
+#'
+#' The Q-matrix is a binary matrix where:
+#' \deqn{
+#' q_{jk} =
+#' \begin{cases}
+#' 1 & \text{if item } j \text{ requires attribute } k, \\
+#' 0 & \text{otherwise.}
+#' \end{cases}
+#' }
+#'
+#' Three cognitive diagnosis models are supported:
+#'
+#' \strong{DINA model}
+#' (Junker & Sijtsma, 2001):
+#' \deqn{
+#' P(X_j=1|\alpha) =
+#' (1-s_j)^{\eta_j(\alpha)}
+#' g_j^{1-\eta_j(\alpha)},
+#' }
+#' where \eqn{s_j} is the slip parameter and \eqn{g_j} is the guess parameter.
+#'
+#' \strong{DINO model}
+#' shares the same functional form but uses a compensatory
+#' OR-type mastery indicator.
+#'
+#' \strong{GDINA model}
+#' (de la Torre, 2011) is a saturated model allowing arbitrary
+#' interaction effects among required attributes.
+#'
+#' All models assume:
+#' \itemize{
+#'   \item Binary item responses;
+#'   \item Conditional independence of item responses given the latent profile;
+#'   \item Fixed item parameters during the adaptive session.
+#' }
 #'
 #' @param q_matrix A binary matrix of items (rows) by attributes (columns).
 #' @param model A string: `"DINA"`, `"DINO"`, or `"GDINA"`.
-#' @param slip A numeric vector of slip parameters (required for DINA/DINO).
-#' @param guess A numeric vector of guess parameters (required for DINA/DINO).
-#' @param gdina_params A named list of item parameters (required for GDINA).
+#' @param slip Numeric vector of slip parameters (required for DINA/DINO).
+#' @param guess Numeric vector of guess parameters (required for DINA/DINO).
+#' @param gdina_params Named list of item parameters (required for GDINA).
 #'
-#' @return A list of class `cdcat_items`.
+#' @return A list of class `cdcat_items` containing the Q-matrix,
+#' item parameters, and model specification.
+#'
+#' @references
+#' Junker, B. W., & Sijtsma, K. (2001).
+#' Cognitive assessment models with few assumptions, and connections with
+#' nonparametric item response theory.
+#'
+#' de la Torre, J. (2011).
+#' The generalized DINA model framework.
+#'
 #' @export
-#'
-#' @examples
-#' Q <- matrix(c(1,0, 0,1, 1,1), nrow = 3, ncol = 2, byrow = TRUE)
-#' items <- cdcat_items(
-#'   q_matrix = Q,
-#'   model    = "DINA",
-#'   slip     = c(0.1, 0.1, 0.1),
-#'   guess    = c(0.2, 0.2, 0.2)
-#' )
 cdcat_items <- function(
     q_matrix,
     model,

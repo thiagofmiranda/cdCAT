@@ -2,21 +2,51 @@
 % Please edit documentation in R/criteria.R
 \name{SHE_criteria}
 \alias{SHE_criteria}
-\title{SHE criterion}
+\title{Shannon Entropy (SHE) Criterion for CD-CAT}
 \usage{
 SHE_criteria(item_index, prob_matrix, posterior)
 }
 \arguments{
 \item{item_index}{Integer. Index of the candidate item.}
 
-\item{prob_matrix}{Matrix J x 2^K of response probabilities.}
+\item{prob_matrix}{Numeric matrix of dimension J x 2^K
+containing item response probabilities.}
 
-\item{posterior}{Numeric vector of posterior probabilities over profiles.}
+\item{posterior}{Numeric vector of posterior probabilities.}
 }
 \value{
-Numeric scalar (expected entropy — lower is better).
+Numeric scalar representing the expected posterior entropy.
 }
 \description{
-Shannon entropy reduction — selects the item that maximally reduces
-posterior uncertainty.
+Computes the expected posterior Shannon entropy after administering
+a candidate item.
+}
+\details{
+The selected item minimizes the expected posterior entropy after
+observing the potential response to the candidate item.
+
+Let \eqn{\pi_t(\alpha_c)} denote the posterior distribution over
+latent profiles after \eqn{t} administered items.
+
+Shannon entropy is defined as:
+
+\deqn{
+SH(\pi_t) =
+-\sum_{c=1}^{2^K}
+\pi_t(\alpha_c)\log \pi_t(\alpha_c)
+}
+
+For candidate item \eqn{h}, the expected posterior entropy is:
+
+\deqn{
+E[SH(\pi_{t+1})] =
+\sum_{x=0}^{1}
+SH(\pi_{t+1} \mid X_h = x)
+P(X_h = x \mid x^{(t)})
+}
+
+Thus, the criterion evaluates the expected reduction in uncertainty
+about the latent profile induced by administering item \eqn{h}.
+
+Computational complexity per candidate item is \eqn{O(2^K)}.
 }

@@ -31,7 +31,7 @@ usethis::use_test("estimation")
 usethis::use_test("criteria")
 usethis::use_test("selection")
 usethis::use_test("cdcat_session")
-
+usethis::use_test("stopping")
 
 
 

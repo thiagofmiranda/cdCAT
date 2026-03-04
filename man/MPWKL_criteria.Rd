@@ -2,20 +2,42 @@
 % Please edit documentation in R/criteria.R
 \name{MPWKL_criteria}
 \alias{MPWKL_criteria}
-\title{MPWKL criterion}
+\title{Modified Posterior-Weighted Kullback–Leibler (MPWKL) Criterion}
 \usage{
 MPWKL_criteria(item_index, prob_matrix, posterior)
 }
 \arguments{
 \item{item_index}{Integer. Index of the candidate item.}
 
-\item{prob_matrix}{Matrix J x 2^K of response probabilities.}
+\item{prob_matrix}{Numeric matrix of dimension J x 2^K
+containing item response probabilities.}
 
-\item{posterior}{Numeric vector of posterior probabilities over profiles.}
+\item{posterior}{Numeric vector of posterior probabilities.}
 }
 \value{
-Numeric scalar.
+Numeric scalar representing the MPWKL information value.
 }
 \description{
-Mutual posterior-weighted Kullback-Leibler divergence.
+Computes the symmetric posterior-weighted KL divergence across all
+pairs of item response distributions induced by latent profiles.
+}
+\details{
+The MPWKL index for item \eqn{h} is defined as:
+
+\deqn{
+MPWKL_h =
+\sum_{d=1}^{2^K}
+\sum_{c=1}^{2^K}
+KL_h(\alpha_d \Vert \alpha_c)
+\pi_t(\alpha_d)\pi_t(\alpha_c)
+}
+
+where \eqn{KL_h(\alpha_d \Vert \alpha_c)} denotes the KL divergence
+between the conditional response distributions of item \eqn{h}
+under latent profiles \eqn{\alpha_d} and \eqn{\alpha_c}.
+
+This formulation evaluates the expected global discrimination of the item
+under the full posterior distribution.
+
+Computational complexity per candidate item is \eqn{O((2^K)^2)}.
 }

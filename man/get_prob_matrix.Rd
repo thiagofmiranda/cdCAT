@@ -2,22 +2,42 @@
 % Please edit documentation in R/estimation.R
 \name{get_prob_matrix}
 \alias{get_prob_matrix}
-\title{Compute item probability matrix}
+\title{Compute Item Response Probability Matrix}
 \usage{
 get_prob_matrix(q_matrix, parameters, skill_patterns, model)
 }
 \arguments{
-\item{q_matrix}{Binary matrix of items x attributes.}
+\item{q_matrix}{Binary matrix of items by attributes.}
 
-\item{parameters}{List of item parameters (slip/guess for DINA/DINO, named probs for GDINA).}
+\item{parameters}{Model-specific item parameters.}
 
-\item{skill_patterns}{Binary matrix of all 2^K skill profiles.}
+\item{skill_patterns}{Matrix of all \eqn{2^K} attribute profiles.}
 
-\item{model}{A string: \code{"DINA"}, \code{"DINO"}, or \code{"GDINA"}.}
+\item{model}{Character string specifying the CDM.}
 }
 \value{
-A matrix J x 2^K of response probabilities.
+A matrix of dimension \eqn{J \times 2^K}.
 }
 \description{
-Computes P(X=1 | alpha) for all items and all latent skill profiles.
+Computes the matrix of item response probabilities
+\eqn{P(X_j = 1 | \alpha)} for all items and all latent
+attribute profiles under the specified cognitive diagnosis model.
+}
+\details{
+This function computes item response probabilities under three
+cognitive diagnosis models:
+
+\strong{DINA model:}
+\deqn{
+P(X_j=1|\alpha) =
+(1-s_j)^{\eta_j(\alpha)} g_j^{1-\eta_j(\alpha)}
+}
+
+\strong{DINO model:}
+Same functional form as DINA, but with
+\eqn{\eta_j(\alpha) = 1} if at least one required attribute is mastered.
+
+\strong{GDINA model:}
+A saturated model allowing arbitrary interaction effects among
+required attributes.
 }

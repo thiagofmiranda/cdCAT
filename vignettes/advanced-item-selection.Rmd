@@ -1,0 +1,554 @@
+---
+title: "Advanced Item Selection: Content Balancing, Exposure Control, and Shadow CAT"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced Item Selection: Content Balancing, Exposure Control, and Shadow CAT}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(cdCAT)
+set.seed(42)
+```
+
+## Overview
+
+This vignette covers three advanced item selection features available in `cdCAT`:
+
+| Feature | Parameter | Purpose |
+|---|---|---|
+| Content balancing | `content`, `content_prop` | Keep domain coverage proportional to a blueprint |
+| Exposure control | `exposure` | Limit overuse of specific items |
+| Shadow CAT | `constr_fun` | Enforce arbitrary test assembly constraints |
+
+All three can be combined with any adaptive criterion (PWKL, KL, MPWKL, SHE)
+and work through the same `CdcatSession` interface.
+
+---
+
+## Shared Item Bank
+
+All examples in this vignette use the same 12-item DINA bank with three
+content domains and two attributes.
+
+```{r item-bank}
+# Q-matrix: 12 items x 2 attributes
+# Items 1-4:  domain "Algebra"   (attribute 1 only)
+# Items 5-8:  domain "Geometry"  (attribute 2 only)
+# Items 9-12: domain "Mixed"     (both attributes)
+Q <- matrix(c(
+  1, 0,   # item 1
+  1, 0,   # item 2
+  1, 0,   # item 3
+  1, 0,   # item 4
+  0, 1,   # item 5
+  0, 1,   # item 6
+  0, 1,   # item 7
+  0, 1,   # item 8
+  1, 1,   # item 9
+  1, 1,   # item 10
+  1, 1,   # item 11
+  1, 1    # item 12
+), nrow = 12, ncol = 2, byrow = TRUE)
+
+slip  <- c(0.10, 0.12, 0.08, 0.11,   # Algebra
+           0.10, 0.09, 0.12, 0.11,   # Geometry
+           0.10, 0.11, 0.09, 0.12)   # Mixed
+
+guess <- c(0.20, 0.18, 0.22, 0.19,   # Algebra
+           0.20, 0.21, 0.18, 0.20,   # Geometry
+           0.15, 0.17, 0.16, 0.18)   # Mixed
+
+items <- cdcat_items(
+  q_matrix = Q,
+  model    = "DINA",
+  slip     = slip,
+  guess    = guess
+)
+
+# Content domain vector (one label per item)
+content <- c(
+  rep("Algebra",  4),
+  rep("Geometry", 4),
+  rep("Mixed",    4)
+)
+
+print(items)
+```
+
+---
+
+## 1. Content Balancing
+
+### Concept
+
+Without content balancing, the adaptive algorithm selects whichever item
+maximises the criterion score, which can exhaust one domain while leaving
+others barely represented. Content balancing enforces a **blueprint**
+(target proportions per domain) by restricting each selection step to the
+most under-represented domain (Kingsbury & Zara, 1991).
+
+At each step, `cdCAT` computes the **gap** for every domain:
+
+```
+gap_d = target_proportion_d - observed_proportion_d
+```
+
+The domain with the largest gap becomes the candidate pool for that step.
+If no candidate items belong to that domain, the full pool is used as a
+safe fallback.
+
+### Setup
+
+```{r content-setup}
+# Target: 33% from each domain
+content_prop <- c(
+  Algebra  = 1/3,
+  Geometry = 1/3,
+  Mixed    = 1/3
+)
+```
+
+### Running a session with content balancing
+
+```{r content-session}
+session_cb <- CdcatSession$new(
+  items        = items,
+  criterion    = "PWKL",
+  method       = "MAP",
+  min_items    = 9L,    # force all items to be administered for illustration
+  max_items    = 9L,
+  content      = content,
+  content_prop = content_prop
+)
+
+print(session_cb)
+
+# Simulate a respondent who masters both attributes
+simulated_responses <- c(1, 1, 1, 1,   # Algebra items  (correct)
+                         0, 0, 0, 0,   # Geometry items (incorrect)
+                         1, 0, 1, 0)   # Mixed items    (mixed)
+
+repeat {
+  item <- session_cb$next_item()
+  if (item == 0) break
+  session_cb$update(item, simulated_responses[item])
+}
+
+res_cb <- session_cb$result()
+```
+
+### Inspecting the domain distribution
+
+```{r content-results}
+domain_counts <- table(content[res_cb$administered])
+domain_prop   <- round(domain_counts / res_cb$n_items, 2)
+
+cat("Items administered:", res_cb$administered, "\n")
+cat("Domain counts     :\n")
+print(domain_counts)
+cat("Domain proportions:\n")
+print(domain_prop)
+cat("Target proportions:", round(content_prop, 2), "\n")
+```
+
+With `min_items = max_items = 9L` and a perfect 1/3 blueprint, each domain
+contributes exactly 3 items regardless of criterion scores.
+
+### `apply_content_balancing()` directly
+
+You can also call the function outside a session, for example to inspect
+which items would be selected at a given state:
+
+```{r content-direct}
+# After administering items 1 and 2 (both Algebra),
+# the gap favours Geometry or Mixed
+candidates <- apply_content_balancing(
+  candidate_items = 3:12,
+  administered    = c(1L, 2L),
+  content         = content,
+  content_prop    = content_prop
+)
+cat("Filtered candidates:", candidates, "\n")
+cat("Their domains      :", content[candidates], "\n")
+```
+
+---
+
+## 2. Exposure Control
+
+### Concept
+
+Adaptive tests tend to overuse a small subset of highly informative items,
+which can compromise test security and statistical properties. `cdCAT`
+supports two exposure control methods:
+
+| Method | Trigger | Mechanism |
+|---|---|---|
+| **Sympson-Hetter** | all `exposure` values in `[0, 1]` | Each item has an acceptance probability; best item is kept only if it passes a random draw |
+| **Randomesque** | all `exposure` values `>= 1` | At position k, a random draw is made from the top-`exposure[k]` candidates |
+
+Both methods accept a numeric vector of length J (one entry per item).
+
+### 2a. Sympson-Hetter
+
+Values close to 1 let an item pass almost always; values close to 0 make
+it rarely selected.
+
+```{r sh-session}
+# Items 9-12 (Mixed) are very informative; limit their exposure to 60%
+exposure_sh        <- rep(0.9, 12)
+exposure_sh[9:12]  <- 0.8
+
+session_sh <- CdcatSession$new(
+  items    = items,
+  criterion = "PWKL",
+  method   = "MAP",
+  min_items = 6L,
+  max_items = 6L,
+  exposure  = exposure_sh
+)
+
+print(session_sh)
+
+repeat {
+  item <- session_sh$next_item()
+  if (item == 0) break
+  session_sh$update(item, simulated_responses[item])
+}
+
+res_sh <- session_sh$result()
+cat("Items administered:", res_sh$administered, "\n")
+cat("Estimated profile :", res_sh$alpha_hat, "\n")
+```
+
+### 2b. Randomesque
+
+`exposure[k]` controls how many top-scoring items are pooled for a random
+draw when selecting the k-th item. `exposure[k] = 1` is identical to
+greedy selection; `exposure[k] = 3` means the 3 best items compete equally.
+
+```{r rq-session}
+# At positions 1-3 draw from top-3; positions 4-6 draw from top-2
+exposure_rq      <- rep(1L, 12)
+exposure_rq[1:3] <- 3L
+exposure_rq[4:6] <- 2L
+
+session_rq <- CdcatSession$new(
+  items     = items,
+  criterion = "PWKL",
+  method    = "MAP",
+  min_items = 6L,
+  max_items = 6L,
+  exposure  = exposure_rq
+)
+
+print(session_rq)
+
+repeat {
+  item <- session_rq$next_item()
+  if (item == 0) break
+  session_rq$update(item, simulated_responses[item])
+}
+
+res_rq <- session_rq$result()
+cat("Items administered:", res_rq$administered, "\n")
+cat("Estimated profile :", res_rq$alpha_hat, "\n")
+```
+
+### Using exposure control functions directly
+
+```{r exposure-direct}
+# Sympson-Hetter: item 10 has score 0.9 but only 20% acceptance probability
+scores    <- c(0.4, 0.6, 0.7, 0.9, 0.3, 0.5)
+available <- 7:12
+
+# Global exposure vector (length = total items in bank)
+p_sh <- rep(0.9, 12)
+p_sh[10] <- 0.2   # item with score 0.9
+
+set.seed(123)
+selected <- apply_sympson_hetter(scores, available, p_sh)
+cat("Selected item (Sympson-Hetter):", selected, "\n")
+
+# Randomesque: draw from top-2
+selected_rq <- apply_randomesque(scores, available, n = 2L)
+cat("Selected item (Randomesque)   :", selected_rq, "\n")
+```
+
+---
+
+## 3. Shadow CAT
+
+### Concept
+
+Shadow CAT (van der Linden, 2005) builds a **shadow test** at each step: a
+complete test form that satisfies all assembly constraints and contains the
+next item to be administered. This allows complex combinatorial constraints
+(maximum-information subject to content, enemy items, item overlap limits,
+etc.) to be enforced through integer programming.
+
+In `cdCAT`, shadow mode is activated by supplying a `constr_fun`. The
+function receives the full-bank criterion scores and returns the index of
+the next item:
+
+```r
+constr_fun <- function(scores, items, administered) {
+  # scores        : numeric vector length J, one score per item
+  # items         : cdcat_items object (Q-matrix, parameters, ...)
+  # administered  : integer vector of already-administered item indices
+  # return        : single integer -- index of the next item
+}
+```
+
+`cdCAT` is solver-agnostic: any optimisation library (`lpSolve`, `ROI`,
+`ompr`, ...) can be used inside `constr_fun`.
+
+### Example 1 -- Greedy shadow (no external solver)
+
+The simplest shadow function just picks the highest-scoring
+non-administered item -- equivalent to standard greedy, but written in the
+shadow API:
+
+```{r shadow-greedy}
+greedy_shadow <- function(scores, items, administered) {
+  scores[administered] <- -Inf
+  which.max(scores)
+}
+
+session_shadow_greedy <- CdcatSession$new(
+  items      = items,
+  criterion  = "PWKL",
+  method     = "MAP",
+  min_items  = 6L,
+  max_items  = 6L,
+  constr_fun = greedy_shadow
+)
+
+print(session_shadow_greedy)
+```
+
+### Example 2 -- Content and overlap constraints (no solver)
+
+A more realistic shadow function enforces:
+
+1. No more than 2 items from the same domain in any 4-item window.
+2. Items 3 and 7 are "enemy items" -- they cannot both appear.
+
+```{r shadow-custom}
+make_constrained_shadow <- function(content, enemy_pairs) {
+
+  function(scores, items, administered) {
+
+    J         <- items$n_items
+    available <- setdiff(seq_len(J), administered)
+
+    if (length(available) == 0)
+      return(NA_integer_)
+
+    # --- Enemy item constraint
+    for (pair in enemy_pairs) {
+      if (pair[1] %in% administered)
+        available <- setdiff(available, pair[2])
+      if (pair[2] %in% administered)
+        available <- setdiff(available, pair[1])
+    }
+
+    if (length(available) == 0)
+      available <- setdiff(seq_len(J), administered)  # fallback
+
+    # --- Domain cap: at most 2 items per domain in any window of 4
+    if (length(administered) > 0) {
+      domain_counts <- table(content[administered])
+      capped_domains <- names(domain_counts[domain_counts >= 2])
+      if (length(capped_domains) > 0 && length(available) > 1) {
+        filtered <- available[!content[available] %in% capped_domains]
+        if (length(filtered) > 0)
+          available <- filtered
+      }
+    }
+
+    # --- Select highest-scoring item from filtered pool
+    available[which.max(scores[available])]
+  }
+}
+
+constr_fn <- make_constrained_shadow(
+  content     = content,
+  enemy_pairs = list(c(3L, 7L))  # items 3 and 7 cannot coexist
+)
+
+session_shadow <- CdcatSession$new(
+  items      = items,
+  criterion  = "PWKL",
+  method     = "MAP",
+  min_items  = 8L,
+  max_items  = 8L,
+  constr_fun = constr_fn
+)
+
+repeat {
+  item <- session_shadow$next_item()
+  if (item == 0) break
+  session_shadow$update(item, simulated_responses[item])
+}
+
+res_shadow <- session_shadow$result()
+cat("Items administered:", res_shadow$administered, "\n")
+cat("Domains           :", content[res_shadow$administered], "\n")
+
+# Verify enemy constraint: items 3 and 7 do not coexist
+has_3 <- 3L %in% res_shadow$administered
+has_7 <- 7L %in% res_shadow$administered
+cat("Enemy pair (3, 7) both present:", has_3 & has_7, "\n")
+```
+
+### Example 3 -- LP-based shadow test with `lpSolve`
+
+When `lpSolve` is available, you can solve the full integer programme at
+each step. The constraint function receives scores as the objective vector:
+
+```{r shadow-lp, eval=FALSE}
+# This example requires: install.packages("lpSolve")
+
+make_lp_shadow <- function(content, content_prop, n_items_total) {
+
+  function(scores, items, administered) {
+
+    J    <- items$n_items
+    resp <- integer(J)
+    resp[administered] <- 1L
+
+    # Build constraint matrix
+    # Row 1: total items == n_items_total
+    # Rows 2-4: domain proportions (each domain gets floor(n_items_total/3) items)
+    n_per_domain <- floor(n_items_total / length(content_prop))
+    domains      <- names(content_prop)
+    n_constr     <- 1L + length(domains)
+
+    lhs  <- matrix(0, nrow = n_constr, ncol = J)
+    dirs <- character(n_constr)
+    rhs  <- numeric(n_constr)
+
+    # Already-administered items must stay
+    lhs  <- rbind(lhs, resp)
+    dirs <- c(dirs, "==")
+    rhs  <- c(rhs, sum(resp))
+
+    # Row 1: total items
+    lhs[1, ]  <- 1
+    dirs[1]   <- "=="
+    rhs[1]    <- n_items_total
+
+    # Rows 2+: per-domain counts
+    for (i in seq_along(domains)) {
+      lhs[i + 1L, content == domains[i]] <- 1
+      dirs[i + 1L] <- ">="
+      rhs[i + 1L]  <- n_per_domain
+    }
+
+    obj <- scores
+    obj[administered] <- obj[administered] * resp[administered]
+
+    out <- lpSolve::lp(
+      direction  = "max",
+      objective.in  = obj,
+      const.mat  = lhs,
+      const.dir  = dirs,
+      const.rhs  = rhs,
+      all.bin    = TRUE
+    )
+
+    if (out$status != 0L)
+      stop("lpSolve could not find a feasible solution.")
+
+    solution <- out$solution
+    solution[administered] <- 0
+    if (sum(solution) == 0L) return(NA_integer_)
+    as.integer(which.max(solution * scores))
+  }
+}
+
+session_lp <- CdcatSession$new(
+  items      = items,
+  criterion  = "PWKL",
+  method     = "MAP",
+  min_items  = 9L,
+  max_items  = 9L,
+  constr_fun = make_lp_shadow(content, content_prop, n_items_total = 9L)
+)
+
+repeat {
+  item <- session_lp$next_item()
+  if (item == 0) break
+  session_lp$update(item, simulated_responses[item])
+}
+
+res_lp <- session_lp$result()
+cat("Items administered:", res_lp$administered, "\n")
+cat("Domains           :", content[res_lp$administered], "\n")
+```
+
+---
+
+## 4. Combining Features
+
+Content balancing and exposure control can be combined in the same session.
+Shadow mode bypasses both (the constraint function is responsible for all
+assembly requirements).
+
+```{r combined}
+# Content balancing + Sympson-Hetter exposure
+exposure_combined        <- rep(0.9, 12)
+exposure_combined[9:12]  <- 0.5   # limit Mixed items
+
+session_combined <- CdcatSession$new(
+  items        = items,
+  criterion    = "PWKL",
+  method       = "MAP",
+  min_items    = 6L,
+  max_items    = 6L,
+  content      = content,
+  content_prop = content_prop,
+  exposure     = exposure_combined
+)
+
+print(session_combined)
+
+repeat {
+  item <- session_combined$next_item()
+  if (item == 0) break
+  session_combined$update(item, simulated_responses[item])
+}
+
+res_combined <- session_combined$result()
+cat("Items administered:", res_combined$administered, "\n")
+cat("Domains           :", content[res_combined$administered], "\n")
+cat("Estimated profile :", res_combined$alpha_hat, "\n")
+```
+
+---
+
+## Summary
+
+| Feature | Key parameter | When to use |
+|---|---|---|
+| Content balancing | `content` + `content_prop` | Blueprint-driven assessments |
+| Sympson-Hetter | `exposure` in `[0,1]` | Probabilistic item-level exposure limits |
+| Randomesque | `exposure >= 1` | Position-level top-n random draw |
+| Shadow CAT | `constr_fun` | Arbitrary combinatorial constraints, LP-based assembly |
+
+## References
+
+Kingsbury, G. G., & Zara, A. R. (1991). A comparison of procedures for
+content-sensitive item selection in computerized adaptive testing.
+*Applied Measurement in Education*, 4(3), 241--261.
+
+Sympson, J. B., & Hetter, R. D. (1985). *Controlling item-exposure rates
+in computerized adaptive testing*. Proceedings of the 27th annual meeting
+of the Military Testing Association (pp. 973--977).
+
+van der Linden, W. J. (2005). *Linear models for optimal test design*.
+Springer.

@@ -11,7 +11,13 @@ select_next_item(
   criterion,
   est = NULL,
   method = "MAP",
-  prior = NULL
+  prior = NULL,
+  content = NULL,
+  content_prop = NULL,
+  exposure = NULL,
+  constr_fun = NULL,
+  initial_profile = NULL,
+  return_details = FALSE
 )
 }
 \arguments{
@@ -22,19 +28,80 @@ select_next_item(
 \item{administered}{Integer vector of already administered item indices.}
 
 \item{criterion}{A string: \code{"KL"}, \code{"PWKL"}, \code{"MPWKL"}, \code{"SHE"},
-\code{"random"}, or \code{"seq"}.}
+\code{"SEQ"}, or \code{"RANDOM"}.}
 
-\item{est}{A list returned by \code{estimate_alpha()}. If \code{NULL}, it is computed
+\item{est}{A list returned by \code{\link[=estimate_alpha]{estimate_alpha()}}. If \code{NULL}, computed
 internally.}
 
-\item{method}{Estimation method passed to \code{estimate_alpha()} if \code{est = NULL}.}
+\item{method}{Estimation method passed to \code{\link[=estimate_alpha]{estimate_alpha()}} if
+\code{est = NULL}.}
 
-\item{prior}{Prior probabilities passed to \code{estimate_alpha()} if \code{est = NULL}.}
+\item{prior}{Prior probabilities passed to \code{\link[=estimate_alpha]{estimate_alpha()}} if
+\code{est = NULL}.}
+
+\item{content}{Character vector of length J with content domain labels.
+\code{NULL} disables content balancing.}
+
+\item{content_prop}{Named numeric vector of target domain proportions.
+\code{NULL} disables content balancing.}
+
+\item{exposure}{Numeric vector of length J with exposure parameters.
+\code{NULL} disables exposure control.}
+
+\item{constr_fun}{Constraint function for shadow mode, or \code{NULL}.}
+
+\item{initial_profile}{Binary integer vector of length K for first-item
+anchor override, or \code{NULL}.}
+
+\item{return_details}{Logical. If \code{TRUE}, returns a named list with
+selection details instead of a plain integer. Default \code{FALSE}.}
 }
 \value{
-Integer scalar — index of the selected item.
+When \code{return_details = FALSE} (default): integer scalar -- item index.
+
+When \code{return_details = TRUE}: named list with fields:
+\describe{
+\item{\code{item}}{Integer. Selected item index.}
+\item{\code{candidate_items}}{Integer vector after content filter.}
+\item{\code{criterion_scores}}{Named numeric vector of scores (names are
+item indices), or \code{NULL} for non-adaptive criteria.}
+\item{\code{item_pre_exposure}}{Integer. Item that would have been selected
+without exposure control, or \code{NA} if not applicable.}
+\item{\code{exposure_redirected}}{Logical. Whether exposure control changed
+the selected item.}
+}
 }
 \description{
 Computes the item selection criterion score for all available items
 and returns the index of the best candidate.
+}
+\details{
+\strong{Greedy mode} (\code{constr_fun = NULL}, default):
+\enumerate{
+\item Filter candidates by content balancing;
+\item Compute adaptive criterion scores for filtered candidates;
+\item Select via exposure control.
+}
+
+\strong{Shadow mode} (\code{constr_fun} provided):
+\enumerate{
+\item Compute criterion scores for all J items (full bank);
+\item Delegate selection to \code{constr_fun(scores, items, administered)}.
+}
+}
+\references{
+Kingsbury, G. G., & Zara, A. R. (1991). A comparison of procedures
+for content-sensitive item selection in computerized adaptive
+testing. \emph{Applied Measurement in Education}, 4(3), 241--261.
+
+Sympson, J. B., & Hetter, R. D. (1985). \emph{Controlling item-exposure
+rates in computerized adaptive testing}. Proceedings of the 27th
+annual meeting of the Military Testing Association (pp. 973--977).
+
+van der Linden, W. J. (2005). \emph{Linear models for optimal test design}.
+Springer.
+}
+\seealso{
+\code{\link[=apply_content_balancing]{apply_content_balancing()}}, \code{\link[=apply_exposure_control]{apply_exposure_control()}},
+\link{CdcatSession}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/stopping.R
 \name{check_stopping}
 \alias{check_stopping}
-\title{Evaluate CD-CAT stopping criteria}
+\title{Evaluate CD-CAT Stopping Criteria}
 \usage{
 check_stopping(
   est,
@@ -13,24 +13,104 @@ check_stopping(
 )
 }
 \arguments{
-\item{est}{A list returned by \code{estimate_alpha()}.}
+\item{est}{A list of class \code{cdcat_est} returned by
+\code{estimate_alpha()}.}
 
 \item{n_administered}{Integer. Number of items already administered.}
 
-\item{min_items}{Integer. Minimum number of items before stopping is allowed.}
+\item{min_items}{Integer. Minimum number of items before stopping
+is allowed.}
 
 \item{max_items}{Integer. Maximum number of items allowed.}
 
-\item{threshold}{Numeric in (0.5, 1). Posterior probability threshold for
-attribute classification. Stop when all attributes are classified above
-this threshold (mastered or not mastered). Default is \code{0.8}.}
+\item{threshold}{Numeric vector of length 1 or 2:
+\itemize{
+\item Length 1: attribute-level posterior threshold \eqn{\tau}.
+\item Length 2: dual class-level thresholds
+\eqn{(\tau_1, \tau_2)}.
+}}
 }
 \value{
 A list with:
-\item{stop}{Logical. Whether the test should stop.}
-\item{reason}{Character string describing the stopping reason.}
+\itemize{
+\item \code{stop}: Logical. Whether the test should stop.
+\item \code{reason}: Character string describing the stopping condition.
+}
 }
 \description{
-Checks whether the adaptive test should stop based on the current
-session state.
+Evaluates whether the computerized adaptive test should terminate
+based on the current posterior distribution over latent profiles
+and operational constraints.
+}
+\details{
+This function implements three stopping mechanisms within a
+cognitive diagnosis computerized adaptive testing (CD-CAT) framework:
+
+\strong{1. Fixed-length rule}
+
+The test stops when the number of administered items reaches
+\code{max_items}. This corresponds to the traditional fixed-length
+stopping rule described in the CD-CAT literature.
+
+\strong{2. Attribute-level posterior threshold rule}
+(Tatsuoka, 2002)
+
+Let \eqn{\pi_t(\alpha_c)} denote the posterior distribution over
+latent profiles after \eqn{t} administered items.
+
+The marginal posterior probability of mastery for attribute \eqn{k} is:
+
+\deqn{
+P(\alpha_k = 1 \mid x^{(t)}) =
+\sum_{c: \alpha_{ck}=1} \pi_t(\alpha_c).
+}
+
+The test stops when all attributes are classified with sufficient
+confidence:
+
+\deqn{
+P(\alpha_k = 1 \mid x^{(t)}) \ge \tau
+\quad \text{or} \quad
+P(\alpha_k = 1 \mid x^{(t)}) \le 1 - \tau
+\quad \text{for all } k.
+}
+
+This rule performs classification at the attribute level rather than
+at the full latent class level.
+
+\strong{3. Dual posterior threshold rule}
+(Hsu, Wang, & Chen, 2013)
+
+Let \eqn{\pi_{(1)}} and \eqn{\pi_{(2)}} denote the largest and
+second-largest posterior probabilities among all latent profiles.
+
+The test stops when:
+
+\deqn{
+\pi_{(1)} \ge \tau_1
+\quad \text{and} \quad
+\pi_{(2)} \le \tau_2,
+}
+
+where \eqn{\tau_1 > \tau_2}. This conservative rule avoids stopping
+when two latent profiles remain similarly probable.
+
+In addition to these theoretical criteria, the function enforces:
+\itemize{
+\item A minimum number of administered items (\code{min_items});
+\item A maximum number of administered items (\code{max_items}).
+}
+
+All posterior computations assume conditional independence of item
+responses given the latent profile.
+}
+\references{
+Tatsuoka, C. (2002).
+Data analytic methods for latent partially ordered classification models.
+
+Hsu, C. L., Wang, W. C., & Chen, S. Y. (2013).
+Variable-length computerized adaptive testing based on cognitive diagnosis models.
+
+Rupp, A. A., Templin, J., & Henson, R. (2010).
+Diagnostic Measurement: Theory, Methods, and Applications.
 }

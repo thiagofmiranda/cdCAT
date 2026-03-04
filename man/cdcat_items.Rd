@@ -2,7 +2,7 @@
 % Please edit documentation in R/cdcat_items.R
 \name{cdcat_items}
 \alias{cdcat_items}
-\title{Create a cdCAT item bank}
+\title{Create a cdCAT Item Bank}
 \usage{
 cdcat_items(q_matrix, model, slip = NULL, guess = NULL, gdina_params = NULL)
 }
@@ -11,24 +11,63 @@ cdcat_items(q_matrix, model, slip = NULL, guess = NULL, gdina_params = NULL)
 
 \item{model}{A string: \code{"DINA"}, \code{"DINO"}, or \code{"GDINA"}.}
 
-\item{slip}{A numeric vector of slip parameters (required for DINA/DINO).}
+\item{slip}{Numeric vector of slip parameters (required for DINA/DINO).}
 
-\item{guess}{A numeric vector of guess parameters (required for DINA/DINO).}
+\item{guess}{Numeric vector of guess parameters (required for DINA/DINO).}
 
-\item{gdina_params}{A named list of item parameters (required for GDINA).}
+\item{gdina_params}{Named list of item parameters (required for GDINA).}
 }
 \value{
-A list of class \code{cdcat_items}.
+A list of class \code{cdcat_items} containing the Q-matrix,
+item parameters, and model specification.
 }
 \description{
-Builds and validates the item bank object used in CD-CAT sessions.
+Constructs and validates the item bank object used in cognitive
+diagnosis computerized adaptive testing (CD-CAT) sessions.
 }
-\examples{
-Q <- matrix(c(1,0, 0,1, 1,1), nrow = 3, ncol = 2, byrow = TRUE)
-items <- cdcat_items(
-  q_matrix = Q,
-  model    = "DINA",
-  slip     = c(0.1, 0.1, 0.1),
-  guess    = c(0.2, 0.2, 0.2)
-)
+\details{
+The item bank is defined by a Q-matrix and model-specific item parameters.
+
+The Q-matrix is a binary matrix where:
+\deqn{
+q_{jk} =
+\begin{cases}
+1 & \text{if item } j \text{ requires attribute } k, \\
+0 & \text{otherwise.}
+\end{cases}
+}
+
+Three cognitive diagnosis models are supported:
+
+\strong{DINA model}
+(Junker & Sijtsma, 2001):
+\deqn{
+P(X_j=1|\alpha) =
+(1-s_j)^{\eta_j(\alpha)}
+g_j^{1-\eta_j(\alpha)},
+}
+where \eqn{s_j} is the slip parameter and \eqn{g_j} is the guess parameter.
+
+\strong{DINO model}
+shares the same functional form but uses a compensatory
+OR-type mastery indicator.
+
+\strong{GDINA model}
+(de la Torre, 2011) is a saturated model allowing arbitrary
+interaction effects among required attributes.
+
+All models assume:
+\itemize{
+\item Binary item responses;
+\item Conditional independence of item responses given the latent profile;
+\item Fixed item parameters during the adaptive session.
+}
+}
+\references{
+Junker, B. W., & Sijtsma, K. (2001).
+Cognitive assessment models with few assumptions, and connections with
+nonparametric item response theory.
+
+de la Torre, J. (2011).
+The generalized DINA model framework.
 }

@@ -99,16 +99,18 @@ cat("Posterior         :", round(res$posterior, 3), "\n")
 
 ## 4. Item Selection Criteria
 
-`cdCAT` supports four adaptive criteria and two non-adaptive options:
+All adaptive criteria below are designed for **single attribute profile
+estimation** — they select the item that best discriminates the full
+latent attribute profile α.
 
-| Criterion  | Description                                  |
-|------------|----------------------------------------------|
-| `"PWKL"`   | Posterior-weighted KL divergence (default)   |
-| `"KL"`     | KL divergence from estimated profile         |
-| `"MPWKL"`  | Mutual posterior-weighted KL divergence      |
-| `"SHE"`    | Shannon entropy reduction                    |
-| `"SEQ"`    | Sequential (non-adaptive)                    |
-| `"RANDOM"` | Random selection                             |
+| Criterion  | Full Name                                                   |
+|------------|-------------------------------------------------------------|
+| `"KL"`     | Kullback-Leibler Information (KL) Method                    |
+| `"PWKL"`   | Posterior-Weighted Kullback-Leibler (PWKL) Method           |
+| `"MPWKL"`  | Modified Posterior-Weighted Kullback-Leibler (MPWKL) Method |
+| `"SHE"`    | Shannon Entropy (SHE) Method                                |
+| `"SEQ"`    | Sequential (non-adaptive)                                   |
+| `"RANDOM"` | Random selection                                            |
 
 ---
 

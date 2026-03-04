@@ -1,13 +1,34 @@
-#' Compute item probability matrix
+#' Compute Item Response Probability Matrix
 #'
-#' Computes P(X=1 | alpha) for all items and all latent skill profiles.
+#' Computes the matrix of item response probabilities
+#' \eqn{P(X_j = 1 | \alpha)} for all items and all latent
+#' attribute profiles under the specified cognitive diagnosis model.
 #'
-#' @param q_matrix Binary matrix of items x attributes.
-#' @param parameters List of item parameters (slip/guess for DINA/DINO, named probs for GDINA).
-#' @param skill_patterns Binary matrix of all 2^K skill profiles.
-#' @param model A string: `"DINA"`, `"DINO"`, or `"GDINA"`.
+#' @details
+#' This function computes item response probabilities under three
+#' cognitive diagnosis models:
 #'
-#' @return A matrix J x 2^K of response probabilities.
+#' \strong{DINA model:}
+#' \deqn{
+#' P(X_j=1|\alpha) =
+#' (1-s_j)^{\eta_j(\alpha)} g_j^{1-\eta_j(\alpha)}
+#' }
+#'
+#' \strong{DINO model:}
+#' Same functional form as DINA, but with
+#' \eqn{\eta_j(\alpha) = 1} if at least one required attribute is mastered.
+#'
+#' \strong{GDINA model:}
+#' A saturated model allowing arbitrary interaction effects among
+#' required attributes.
+#'
+#' @param q_matrix Binary matrix of items by attributes.
+#' @param parameters Model-specific item parameters.
+#' @param skill_patterns Matrix of all \eqn{2^K} attribute profiles.
+#' @param model Character string specifying the CDM.
+#'
+#' @return A matrix of dimension \eqn{J \times 2^K}.
+#'
 #' @export
 get_prob_matrix <- function(q_matrix, parameters, skill_patterns, model) {
 
@@ -56,18 +77,43 @@ get_prob_matrix <- function(q_matrix, parameters, skill_patterns, model) {
 }
 
 
-#' Estimate attribute profiles
+#' Estimate Latent Attribute Profiles
 #'
-#' Estimates the latent skill profile (alpha) given observed responses.
+#' Estimates the latent attribute profile given observed item responses
+#' under a specified cognitive diagnosis model.
 #'
-#' @param responses Numeric vector of 0/1/NA responses (one per item).
-#' @param items A `cdcat_items` object.
-#' @param method Estimation method: `"MLE"`, `"MAP"`, or `"EAP"`.
-#' @param prior Numeric vector of prior probabilities over 2^K profiles.
-#'   If `NULL`, uniform prior is used.
+#' @details
+#' The likelihood for latent profile \eqn{\alpha_c} is:
 #'
-#' @return A list of class `cdcat_est` with `alpha_hat`, `alpha_hat_index`,
-#'   `posterior`, `prob_matrix`, and `skill_patterns`.
+#' \deqn{
+#' L(\alpha_c) =
+#' \prod_{j \in \mathcal{J}_t}
+#' P(X_j = x_j | \alpha_c)
+#' }
+#'
+#' MLE selects:
+#' \deqn{
+#' \hat{\alpha}_{MLE} = \arg\max_c L(\alpha_c)
+#' }
+#'
+#' MAP selects:
+#' \deqn{
+#' \hat{\alpha}_{MAP} = \arg\max_c L(\alpha_c)\pi(\alpha_c)
+#' }
+#'
+#' EAP estimates attribute mastery probabilities:
+#' \deqn{
+#' \hat{\alpha}_{EAP,k} =
+#' \sum_c \pi_t(\alpha_c)\alpha_{ck}
+#' }
+#'
+#' @param responses Numeric vector of item responses.
+#' @param items A \code{cdcat_items} object.
+#' @param method Estimation method: "MLE", "MAP", or "EAP".
+#' @param prior Prior distribution over profiles.
+#'
+#' @return A list of class \code{cdcat_est}.
+#'
 #' @export
 estimate_alpha <- function(responses, items, method = "MAP", prior = NULL) {
 
@@ -83,7 +129,7 @@ estimate_alpha <- function(responses, items, method = "MAP", prior = NULL) {
   prior <- if (is.null(prior)) {
     rep(1 / n_profiles, n_profiles)
   } else {
-    as.numeric(prior)
+    .validate_prior(prior, K)
   }
 
   prob_matrix  <- get_prob_matrix(Q, parameters, skill_patterns, items$model)

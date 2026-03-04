@@ -2,24 +2,48 @@
 % Please edit documentation in R/estimation.R
 \name{estimate_alpha}
 \alias{estimate_alpha}
-\title{Estimate attribute profiles}
+\title{Estimate Latent Attribute Profiles}
 \usage{
 estimate_alpha(responses, items, method = "MAP", prior = NULL)
 }
 \arguments{
-\item{responses}{Numeric vector of 0/1/NA responses (one per item).}
+\item{responses}{Numeric vector of item responses.}
 
 \item{items}{A \code{cdcat_items} object.}
 
-\item{method}{Estimation method: \code{"MLE"}, \code{"MAP"}, or \code{"EAP"}.}
+\item{method}{Estimation method: "MLE", "MAP", or "EAP".}
 
-\item{prior}{Numeric vector of prior probabilities over 2^K profiles.
-If \code{NULL}, uniform prior is used.}
+\item{prior}{Prior distribution over profiles.}
 }
 \value{
-A list of class \code{cdcat_est} with \code{alpha_hat}, \code{alpha_hat_index},
-\code{posterior}, \code{prob_matrix}, and \code{skill_patterns}.
+A list of class \code{cdcat_est}.
 }
 \description{
-Estimates the latent skill profile (alpha) given observed responses.
+Estimates the latent attribute profile given observed item responses
+under a specified cognitive diagnosis model.
+}
+\details{
+The likelihood for latent profile \eqn{\alpha_c} is:
+
+\deqn{
+L(\alpha_c) =
+\prod_{j \in \mathcal{J}_t}
+P(X_j = x_j | \alpha_c)
+}
+
+MLE selects:
+\deqn{
+\hat{\alpha}_{MLE} = \arg\max_c L(\alpha_c)
+}
+
+MAP selects:
+\deqn{
+\hat{\alpha}_{MAP} = \arg\max_c L(\alpha_c)\pi(\alpha_c)
+}
+
+EAP estimates attribute mastery probabilities:
+\deqn{
+\hat{\alpha}_{EAP,k} =
+\sum_c \pi_t(\alpha_c)\alpha_{ck}
+}
 }

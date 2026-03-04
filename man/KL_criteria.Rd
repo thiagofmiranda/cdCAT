@@ -2,20 +2,59 @@
 % Please edit documentation in R/criteria.R
 \name{KL_criteria}
 \alias{KL_criteria}
-\title{KL divergence criterion}
+\title{Kullback–Leibler (KL) Information Criterion for CD-CAT}
 \usage{
 KL_criteria(item_index, alpha_hat_index, prob_matrix)
 }
 \arguments{
 \item{item_index}{Integer. Index of the candidate item.}
 
-\item{alpha_hat_index}{Integer. Index of the currently estimated profile.}
+\item{alpha_hat_index}{Integer. Index of the current latent profile estimate.}
 
-\item{prob_matrix}{Matrix J x 2^K of response probabilities.}
+\item{prob_matrix}{Numeric matrix of dimension J x 2^K
+containing item response probabilities P(X=1 | alpha).}
 }
 \value{
-Numeric scalar.
+Numeric scalar representing the KL information value.
 }
 \description{
-Kullback-Leibler divergence between the estimated profile and all others.
+Computes the Kullback–Leibler (KL) information index for a candidate item
+under a cognitive diagnosis computerized adaptive testing (CD-CAT) framework.
+}
+\details{
+This criterion selects the item that maximizes the Kullback–Leibler divergence
+between the item response distribution induced by the current estimated
+latent profile and the response distributions induced by all alternative
+latent profiles.
+
+Let \eqn{\hat{\alpha}^{(t)}} denote the current latent profile estimate after
+\eqn{t} administered items, and let \eqn{\alpha_c}, \eqn{c = 1,\dots,2^K},
+denote all possible latent attribute profiles.
+
+For a candidate item \eqn{h}, the KL index is defined as:
+
+\deqn{
+KL_h(\hat{\alpha}^{(t)}) =
+\sum_{c=1}^{2^K}
+\sum_{x=0}^{1}
+P(X_h = x \mid \hat{\alpha}^{(t)})
+\log
+\frac{P(X_h = x \mid \hat{\alpha}^{(t)})}
+     {P(X_h = x \mid \alpha_c)}
+}
+
+Thus, the divergence is computed between conditional response distributions
+for the candidate item under different latent profiles, not between the
+attribute vectors themselves.
+
+The logarithm is computed using the natural logarithm.
+
+Assumptions:
+\itemize{
+\item Conditional independence of item responses.
+\item A fixed cognitive diagnosis model defining \eqn{P(X=1|\alpha)}.
+\item Equal weighting of all latent profiles.
+}
+
+Computational complexity per candidate item is \eqn{O(2^K)}.
 }

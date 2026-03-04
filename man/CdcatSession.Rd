@@ -9,7 +9,79 @@ CD-CAT Session Object
 CD-CAT Session Object
 }
 \details{
-An R6 class that manages the state of a single CD-CAT application.
+An R6 class implementing the adaptive testing cycle for a single
+cognitive diagnosis computerized adaptive testing (CD-CAT) session.
+
+This class orchestrates the sequential CD-CAT procedure:
+
+\enumerate{
+\item Initialize the posterior distribution over latent profiles;
+\item Select the next item according to a specified selection criterion;
+\item Observe the response and update the posterior;
+\item Evaluate stopping criteria;
+\item Repeat until termination.
+}
+
+The adaptive algorithm assumes:
+\itemize{
+\item Binary item responses;
+\item Conditional independence of item responses given the latent profile;
+\item A calibrated item bank defined by a Q-matrix and fixed item parameters;
+\item A specified estimation method (MLE, MAP, or EAP);
+\item A specified item selection criterion (e.g., KL, PWKL, MPWKL, SHE).
+}
+
+The session object maintains the full state of the adaptive test,
+including responses, administered items, posterior distribution,
+and stopping status.
+
+\strong{Implementation details}
+
+Each call to \code{next_item()} evaluates stopping criteria, computes item
+selection (with full diagnostic details), and caches the result in
+\code{private$pending}. Each call to \code{update(item, response)} records the
+response, re-estimates the attribute profile, and appends a complete
+step record to \code{self$history}.
+
+\strong{Per-step history}
+
+The \code{history} field stores one named list per administered item.
+Use \code{session$history_df()} to convert to a flat data.frame.
+Each record contains:
+
+\describe{
+\item{\code{step}}{Integer. 1-based position in the test.}
+\item{\code{item}}{Integer. Item index administered.}
+\item{\code{response}}{Integer. 0 or 1.}
+\item{\code{candidate_items}}{Integer vector. Items available after
+content balancing filter.}
+\item{\code{criterion_scores}}{Named numeric vector. Criterion score per
+candidate item (\code{NULL} for SEQ/RANDOM).}
+\item{\code{item_pre_exposure}}{Integer. Item that would have been chosen
+without exposure control (\code{NA} in shadow/non-adaptive mode).}
+\item{\code{exposure_redirected}}{Logical. Whether exposure control
+redirected the selection.}
+\item{\code{target_domain}}{Character. Content domain targeted by
+balancing at this step (\code{NULL} if inactive).}
+\item{\code{domain_gap}}{Named numeric. Gap (target - observed) per
+domain at this step (\code{NULL} if inactive).}
+\item{\code{stop_check}}{List with \code{stop} (logical) and \code{reason}
+(character) from the stopping evaluation before this item.}
+\item{\code{posterior}}{Numeric vector of length 2^K. Posterior after
+this response.}
+\item{\code{alpha_hat}}{Integer vector of length K. Estimated profile.}
+\item{\code{alpha_hat_index}}{Integer. Row index of \code{alpha_hat} in the
+skill patterns matrix.}
+\item{\code{mastery_marginal}}{Named numeric of length K.
+P(alpha_k = 1) for each attribute after this response.}
+\item{\code{timestamp}}{POSIXct. Time at which \code{update()} was called.}
+\item{\code{response_time}}{Numeric. Seconds elapsed since the previous
+\code{update()} call (or session start for the first item).}
+}
+}
+\references{
+Rupp, A. A., Templin, J., & Henson, R. (2010).
+Diagnostic Measurement: Theory, Methods, and Applications.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -20,21 +92,35 @@ An R6 class that manages the state of a single CD-CAT application.
 
 \item{\code{criterion}}{Item selection criterion.}
 
-\item{\code{min_items}}{Minimum number of items before stopping.}
+\item{\code{min_items}}{Minimum items before stopping is allowed.}
 
-\item{\code{max_items}}{Maximum number of items allowed.}
+\item{\code{max_items}}{Maximum items allowed.}
 
 \item{\code{threshold}}{Posterior threshold for attribute classification.}
 
-\item{\code{prior}}{Prior probability vector over skill profiles.}
+\item{\code{prior}}{Prior probability vector over skill profiles, or \code{NULL}.}
 
-\item{\code{responses}}{Numeric vector of responses (NA = not yet administered).}
+\item{\code{content}}{Character vector of domain labels per item, or \code{NULL}.}
+
+\item{\code{content_prop}}{Named numeric vector of target domain proportions.}
+
+\item{\code{exposure}}{Numeric exposure vector per item, or \code{NULL}.}
+
+\item{\code{constr_fun}}{Shadow CAT constraint function, or \code{NULL}.}
+
+\item{\code{initial_profile}}{Binary integer vector of length K for
+first-item anchor override, or \code{NULL}.}
+
+\item{\code{responses}}{Numeric vector of responses (NA = not administered).}
 
 \item{\code{administered}}{Integer vector of administered item indices.}
 
-\item{\code{est}}{Latest estimation result (\code{cdcat_est} object).}
+\item{\code{est}}{Latest \code{cdcat_est} estimation result.}
 
-\item{\code{stop_reason}}{Character string with the stopping reason, or NULL.}
+\item{\code{stop_reason}}{Character stopping reason, or \code{NULL}.}
+
+\item{\code{history}}{List of per-step records (one element per administered
+item). See Details for field descriptions.}
 }
 \if{html}{\out{</div>}}
 }
@@ -44,6 +130,7 @@ An R6 class that manages the state of a single CD-CAT application.
 \item \href{#method-CdcatSession-new}{\code{CdcatSession$new()}}
 \item \href{#method-CdcatSession-next_item}{\code{CdcatSession$next_item()}}
 \item \href{#method-CdcatSession-update}{\code{CdcatSession$update()}}
+\item \href{#method-CdcatSession-history_df}{\code{CdcatSession$history_df()}}
 \item \href{#method-CdcatSession-result}{\code{CdcatSession$result()}}
 \item \href{#method-CdcatSession-print}{\code{CdcatSession$print()}}
 \item \href{#method-CdcatSession-clone}{\code{CdcatSession$clone()}}
@@ -62,7 +149,12 @@ Create a new CD-CAT session.
   min_items = 1L,
   max_items = 20L,
   threshold = 0.8,
-  prior = NULL
+  prior = NULL,
+  content = NULL,
+  content_prop = NULL,
+  exposure = NULL,
+  constr_fun = NULL,
+  initial_profile = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -81,7 +173,23 @@ Create a new CD-CAT session.
 
 \item{\code{threshold}}{Classification threshold. Default \code{0.8}.}
 
-\item{\code{prior}}{Prior vector. If \code{NULL}, uniform prior is used.}
+\item{\code{prior}}{Prior probability vector (length 2^K) or output of
+\code{\link[=cdcat_prior]{cdcat_prior()}}. \code{NULL} uses uniform prior.}
+
+\item{\code{content}}{Character vector of length J with domain labels.
+\code{NULL} disables content balancing.}
+
+\item{\code{content_prop}}{Named numeric vector of target domain proportions.
+\code{NULL} disables content balancing.}
+
+\item{\code{exposure}}{Numeric vector of length J. Values in \verb{[0,1]} ->
+Sympson-Hetter; values \verb{>= 1} -> Randomesque. \code{NULL} disables.}
+
+\item{\code{constr_fun}}{Constraint function for shadow CAT, or \code{NULL}.}
+
+\item{\code{initial_profile}}{Binary integer vector of length K. When
+provided, used as the anchor profile for KL/PWKL on the first
+item selection only; does not affect the posterior.}
 }
 \if{html}{\out{</div>}}
 }
@@ -91,51 +199,76 @@ Create a new CD-CAT session.
 \if{latex}{\out{\hypertarget{method-CdcatSession-next_item}{}}}
 \subsection{Method \code{next_item()}}{
 Select the next item to administer.
+
+Evaluates stopping criteria, computes item selection, and caches
+selection details internally for \code{update()} to incorporate into
+the history record.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CdcatSession$next_item()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Integer index of the next item, or \code{0} if the test should stop.
+Integer index of the next item, or \code{0L} if stopped.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CdcatSession-update"></a>}}
 \if{latex}{\out{\hypertarget{method-CdcatSession-update}{}}}
 \subsection{Method \code{update()}}{
-Register a response and update the session state.
+Register a response and update session state.
+
+Records the response, re-estimates the attribute profile, and
+appends a complete step record to \code{self$history}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CdcatSession$update(item_index, response)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CdcatSession$update(item, response)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{item_index}}{Integer. Index of the item that was administered.}
+\item{\code{item}}{Integer. Index of the administered item.}
 
-\item{\code{response}}{Numeric. Response value (0 or 1).}
+\item{\code{response}}{Numeric. 1 (correct) or 0 (incorrect).}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CdcatSession-history_df"></a>}}
+\if{latex}{\out{\hypertarget{method-CdcatSession-history_df}{}}}
+\subsection{Method \code{history_df()}}{
+Convert the history list to a flat data.frame.
+
+Vector-valued fields (posterior, mastery_marginal, alpha_hat,
+criterion_scores, candidate_items, domain_gap) are kept as
+list-columns.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CdcatSession$history_df()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A data.frame with one row per administered item, or an
+empty data.frame if no items have been administered.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CdcatSession-result"></a>}}
 \if{latex}{\out{\hypertarget{method-CdcatSession-result}{}}}
 \subsection{Method \code{result()}}{
-Return the final result of the session.
+Extract final session results.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CdcatSession$result()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A list with the estimated profile, posterior, and history.
+Named list with estimation results and session metadata.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CdcatSession-print"></a>}}
 \if{latex}{\out{\hypertarget{method-CdcatSession-print}{}}}
 \subsection{Method \code{print()}}{
-Print a summary of the current session state.
+Print a summary of the session state.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{CdcatSession$print(...)}\if{html}{\out{</div>}}
 }
