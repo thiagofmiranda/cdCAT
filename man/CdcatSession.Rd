@@ -111,6 +111,9 @@ Diagnostic Measurement: Theory, Methods, and Applications.
 \item{\code{initial_profile}}{Binary integer vector of length K for
 first-item anchor override, or \code{NULL}.}
 
+\item{\code{start_item}}{Integer or character. Method for selecting the
+first item.}
+
 \item{\code{responses}}{Numeric vector of responses (NA = not administered).}
 
 \item{\code{administered}}{Integer vector of administered item indices.}
@@ -154,7 +157,8 @@ Create a new CD-CAT session.
   content_prop = NULL,
   exposure = NULL,
   constr_fun = NULL,
-  initial_profile = NULL
+  initial_profile = NULL,
+  start_item = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -190,6 +194,14 @@ Sympson-Hetter; values \verb{>= 1} -> Randomesque. \code{NULL} disables.}
 \item{\code{initial_profile}}{Binary integer vector of length K. When
 provided, used as the anchor profile for KL/PWKL on the first
 item selection only; does not affect the posterior.}
+
+\item{\code{start_item}}{Integer or character. Specifies how the first item
+is selected. An integer administers that specific item index; \code{"random"}
+selects randomly; \code{"seq"} selects the first available item; a criterion
+name (\code{"KL"}, \code{"PWKL"}, \code{"MPWKL"}, \code{"SHE"}) applies that criterion
+for the first selection only. \code{NULL} (default) applies the main
+\code{criterion} from the very first item, including content balancing,
+exposure control, and shadow CAT constraints.}
 }
 \if{html}{\out{</div>}}
 }

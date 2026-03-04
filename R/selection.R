@@ -254,6 +254,78 @@ select_next_item <- function(
 }
 
 
+#' Select the first item in a CD-CAT session (internal)
+#'
+#' Handles the `start_item` logic for the first item only. Delegates to
+#' [select_next_item()] when `start_item` is a criterion string.
+#'
+#' @param start_item Integer index, or character criterion string (upper-cased).
+#' @param items A `cdcat_items` object.
+#' @param criterion The session's main criterion (passed to
+#'   [select_next_item()] when `start_item` is a criterion name).
+#' @param method Estimation method.
+#' @param prior Prior probability vector, or `NULL`.
+#' @param initial_profile Binary integer vector of length K, or `NULL`.
+#' @return Integer scalar -- selected item index.
+#' @keywords internal
+.select_first_item <- function(start_item, items, criterion, method, prior,
+                               initial_profile) {
+
+  if (is.integer(start_item))
+    return(start_item)
+
+  # Character: use it as the criterion for first-item selection
+  select_next_item(
+    items           = items,
+    responses       = rep(NA_real_, items$n_items),
+    administered    = integer(0),
+    criterion       = start_item,          # already upper-cased
+    method          = method,
+    prior           = prior,
+    initial_profile = initial_profile,
+    return_details  = FALSE
+  )
+}
+
+
+#' Validate the start_item parameter (internal)
+#'
+#' @param start_item Integer index, character criterion name, or `NULL`.
+#' @param n_items Integer. Total number of items in the bank.
+#' @return Invisibly `TRUE`. Stops on error.
+#' @keywords internal
+.validate_start_item <- function(start_item, n_items) {
+
+  if (is.null(start_item))
+    return(invisible(TRUE))
+
+  if (is.numeric(start_item) || is.integer(start_item)) {
+    val <- suppressWarnings(as.integer(start_item))
+    if (length(val) != 1L || is.na(val) || val < 1L || val > n_items)
+      stop(sprintf(
+        "start_item numeric must be a positive integer in [1, %d].",
+        n_items
+      ))
+    return(invisible(TRUE))
+  }
+
+  if (is.character(start_item)) {
+    valid <- c("RANDOM", "SEQ", "KL", "PWKL", "MPWKL", "SHE")
+    if (!toupper(start_item) %in% valid)
+      stop(sprintf(
+        "start_item character must be one of: %s.",
+        paste(valid, collapse = ", ")
+      ))
+    return(invisible(TRUE))
+  }
+
+  stop(
+    "start_item must be a positive integer or one of: ",
+    "'random', 'seq', 'KL', 'PWKL', 'MPWKL', 'SHE'."
+  )
+}
+
+
 #' Validate initial_profile (internal)
 #'
 #' @param initial_profile Binary integer vector of length K, or `NULL`.

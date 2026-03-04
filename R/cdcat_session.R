@@ -121,6 +121,9 @@ CdcatSession <- R6::R6Class(
     #' @field initial_profile Binary integer vector of length K for
     #'   first-item anchor override, or `NULL`.
     initial_profile = NULL,
+    #' @field start_item Integer or character. Method for selecting the
+    #'   first item.
+    start_item = NULL,
 
     # -- Session state fields --
     #' @field responses Numeric vector of responses (NA = not administered).
@@ -155,6 +158,13 @@ CdcatSession <- R6::R6Class(
     #' @param initial_profile Binary integer vector of length K. When
     #'   provided, used as the anchor profile for KL/PWKL on the first
     #'   item selection only; does not affect the posterior.
+    #' @param start_item Integer or character. Specifies how the first item
+    #'   is selected. An integer administers that specific item index; `"random"`
+    #'   selects randomly; `"seq"` selects the first available item; a criterion
+    #'   name (`"KL"`, `"PWKL"`, `"MPWKL"`, `"SHE"`) applies that criterion
+    #'   for the first selection only. `NULL` (default) applies the main
+    #'   `criterion` from the very first item, including content balancing,
+    #'   exposure control, and shadow CAT constraints.
     initialize = function(
     items,
     method          = "MAP",
@@ -167,7 +177,8 @@ CdcatSession <- R6::R6Class(
     content_prop    = NULL,
     exposure        = NULL,
     constr_fun      = NULL,
-    initial_profile = NULL
+    initial_profile = NULL,
+    start_item      = NULL
     ) {
       if (!inherits(items, "cdcat_items"))
         stop("items must be a cdcat_items object.")
@@ -177,6 +188,7 @@ CdcatSession <- R6::R6Class(
       .validate_exposure(exposure, items$n_items)
       .validate_constr_fun(constr_fun)
       .validate_initial_profile(initial_profile, items$n_attrs)
+      .validate_start_item(start_item, items$n_items)
 
       if (!is.null(constr_fun) &&
           (!is.null(content) || !is.null(exposure)))
@@ -200,6 +212,12 @@ CdcatSession <- R6::R6Class(
       self$initial_profile <- if (!is.null(initial_profile))
         as.integer(initial_profile)
       else NULL
+      self$start_item      <- if (is.null(start_item))
+        NULL
+      else if (is.numeric(start_item) || is.integer(start_item))
+        as.integer(start_item)
+      else
+        toupper(start_item)
 
       self$responses       <- rep(NA_real_, items$n_items)
       self$administered    <- integer(0)
@@ -227,6 +245,31 @@ CdcatSession <- R6::R6Class(
 
       if (!is.null(self$stop_reason))
         return(0L)
+
+      # -- First item: delegate to start_item logic (only when explicitly set)
+      if (length(self$administered) == 0 && !is.null(self$start_item)) {
+        first_item <- .select_first_item(
+          start_item      = self$start_item,
+          items           = self$items,
+          criterion       = self$criterion,
+          method          = self$method,
+          prior           = self$prior,
+          initial_profile = self$initial_profile
+        )
+
+        private$pending <- list(
+          item                = first_item,
+          candidate_items     = seq_len(self$items$n_items),
+          criterion_scores    = NULL,
+          item_pre_exposure   = NA_integer_,
+          exposure_redirected = FALSE,
+          target_domain       = NULL,
+          domain_gap          = NULL,
+          stop_check          = list(stop = FALSE, reason = NA_character_)
+        )
+
+        return(first_item)
+      }
 
       # -- Stopping check
       stop_check <- check_stopping(
@@ -392,6 +435,13 @@ CdcatSession <- R6::R6Class(
       cat("  Model    :", self$items$model, "\n")
       cat("  Method   :", self$method, "\n")
       cat("  Criterion:", self$criterion, "\n")
+      if (!is.null(self$start_item)) {
+        if (is.integer(self$start_item)) {
+          cat(sprintf("  Start    : item %d\n", self$start_item))
+        } else {
+          cat(sprintf("  Start    : %s\n", self$start_item))
+        }
+      }
       cat("  Items    :", n, "/", self$max_items, "administered\n")
       cat("  Prior    :", if (is.null(self$prior)) "uniform" else "custom", "\n")
       cat("  Init.prof:", if (is.null(self$initial_profile)) "none"

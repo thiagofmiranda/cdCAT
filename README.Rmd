@@ -58,10 +58,12 @@ This ensures theoretical consistency with established CD-CAT methodology.
 - **Item selection criteria**: KL, PWKL, MPWKL, SHE, sequential, random
 - **Estimation methods**: MAP, MLE, EAP
 - **Custom prior**: informative prior over skill profiles via `cdcat_prior()`
+- **Fixed or adaptive start item**: control the first item via `start_item`
 - **Content balancing**: blueprint-driven domain proportions (Kingsbury & Zara, 1991)
 - **Exposure control**: Sympson-Hetter and Randomesque methods
 - **Shadow CAT**: user-defined constraint functions for arbitrary test assembly
 - **Stopping rules**: maximum items, posterior threshold classification
+- **Built-in simulated datasets**: `cdcat_sim` — 16 datasets across K, model, and item quality
 - **Session-based architecture**: stateful R6 object manages the full CAT lifecycle
 - **Lightweight**: depends only on `R6`
 
@@ -224,6 +226,23 @@ exposure_rq <- c(3L, 2L, 2L, 1L, 1L)         # position 1 draws from top-3
 session <- CdcatSession$new(items, exposure = exposure_sh)
 ```
 
+### Fixed or Adaptive Start Item
+
+Control which item is administered first without touching the main
+adaptive pipeline. Accepts a fixed index, `"random"`, `"seq"`, or any
+adaptive criterion name.
+
+```{r start_item, eval=FALSE}
+# Always start with item 3
+session <- CdcatSession$new(items, start_item = 3L)
+
+# Draw the first item randomly
+session <- CdcatSession$new(items, start_item = "random")
+
+# Use KL for the first item, then switch to PWKL
+session <- CdcatSession$new(items, criterion = "PWKL", start_item = "KL")
+```
+
 ### Shadow CAT
 
 Enforce arbitrary test assembly constraints via a user-supplied function.
@@ -240,6 +259,25 @@ session <- CdcatSession$new(items, constr_fun = greedy_shadow)
 ```
 
 See `vignette("advanced-item-selection")` for a full LP-based example using `lpSolve`.
+
+### Built-in Simulated Data
+
+`cdcat_sim` provides 16 ready-to-use datasets covering K ∈ {3, 5}
+attributes, DINA and GDINA models, and four levels of item quality
+(HD-LV, HD-HV, LD-LV, LD-HV). Each dataset contains the Q-matrix,
+true attribute profiles, item parameters, and simulated responses.
+
+```{r simdata, eval=FALSE}
+# List all available datasets
+names(cdcat_sim)
+
+# Use the K=3 GDINA high-discrimination dataset
+d     <- cdcat_sim[["k3_GDINA_HDLV"]]
+items <- cdcat_items(d$Q, "GDINA", gdina_params = d$parameters)
+```
+
+See `vignette("simulation-study")` for a worked simulation experiment
+comparing all item selection criteria and stopping rules.
 
 ---
 
@@ -261,7 +299,6 @@ Unlike simulation-oriented packages such as `mirtCAT` or `GDINA`,
 Planned extensions include:
 
 - Polytomous extensions
-- Simulation benchmarking tools
 - pkgdown documentation site
 
 ---

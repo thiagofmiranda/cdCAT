@@ -6,3 +6,8 @@
 ^Meta$
 ^README\.Rmd$
 ^\.github$
+^refs$
+^\.claude$
+^data-raw$
+^cache$
+^figure$

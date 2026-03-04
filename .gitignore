@@ -8,3 +8,9 @@
 inst/doc
 /doc/
 /Meta/
+refs
+.claude
+cache/
+figure/
+vignettes/*_cache/
+vignettes/*_files/

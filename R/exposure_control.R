@@ -123,7 +123,7 @@ apply_exposure_control <- function(scores, available, exposure, n_administered) 
 #' @param scores Numeric vector of scores for the candidate items.
 #' @param available Integer vector of global item indices corresponding
 #'   to `scores`.
-#' @param p Numeric vector of acceptance probabilities in [0, 1], one per item in the bank (length J),
+#' @param p Numeric vector of acceptance probabilities in \eqn{[0, 1]}, one per item in the bank (length J),
 #'   The function extracts probabilities for available items internally.
 #'
 #' @return Integer scalar -- global index of the selected item.

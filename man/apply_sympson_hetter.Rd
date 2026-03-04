@@ -12,9 +12,8 @@ apply_sympson_hetter(scores, available, p)
 \item{available}{Integer vector of global item indices corresponding
 to \code{scores}.}
 
-\item{p}{Numeric vector of acceptance probabilities in \verb{[0, 1]},
-one per candidate item (same length and order as \code{scores} and
-\code{available}).}
+\item{p}{Numeric vector of acceptance probabilities in \eqn{[0, 1]}, one per item in the bank (length J),
+The function extracts probabilities for available items internally.}
 }
 \value{
 Integer scalar -- global index of the selected item.
