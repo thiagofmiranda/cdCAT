@@ -11,7 +11,9 @@ This is a resubmission. In response to the previous review I have:
 
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note (on win-builder R-devel)
+
+The single NOTE is from the "CRAN incoming feasibility" check and contains:
 
 * "New submission" -- expected for a first submission to CRAN.
 
@@ -22,8 +24,10 @@ This is a resubmission. In response to the previous review I have:
 
 ## Test environments
 
-* Local: Windows 11, R 4.5.1
-* (Add results from win-builder, R-hub, and mac-builder before submission.)
+* Local: Windows 11, R 4.5.1 -- 0 errors | 0 warnings | 3 notes (environmental)
+* mac-builder (macOS, R-release) -- Status: OK (0 errors | 0 warnings | 0 notes)
+* win-builder (R-devel) -- Status: 1 NOTE (new submission; see above)
+* win-builder (R-release) -- submitted; result pending
 
 ## Downstream dependencies
 
