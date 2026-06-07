@@ -27,7 +27,7 @@ The single NOTE is from the "CRAN incoming feasibility" check and contains:
 * Local: Windows 11, R 4.5.1 -- 0 errors | 0 warnings | 3 notes (environmental)
 * mac-builder (macOS, R-release) -- Status: OK (0 errors | 0 warnings | 0 notes)
 * win-builder (R-devel) -- Status: 1 NOTE (new submission; see above)
-* win-builder (R-release) -- submitted; result pending
+* win-builder (R-release, R 4.6.0) -- Status: 1 NOTE (new submission; see above)
 
 ## Downstream dependencies
 
