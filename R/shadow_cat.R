@@ -1,7 +1,7 @@
-# shadow_cat.R — Shadow CAT (teste sombra) para CD-CAT
+# shadow_cat.R -- Shadow CAT for CD-CAT
 #
-# Funções exportadas : (nenhuma — lógica encapsulada em select_next_item)
-# Funções internas   : .apply_shadow_cat()
+# Exported functions : (none -- logic encapsulated in select_next_item)
+# Internal functions : .apply_shadow_cat()
 #                      .validate_constr_fun()
 
 
@@ -28,9 +28,9 @@
 #' @param criterion Upper-cased criterion string.
 #' @param constr_fun A function with signature
 #'   `function(scores, items, administered)` that returns a single
-#'   integer — the global index of the next item to administer.
+#'   integer -- the global index of the next item to administer.
 #'
-#' @return Integer scalar — global index of the selected item.
+#' @return Integer scalar -- global index of the selected item.
 #' @keywords internal
 .apply_shadow_cat <- function(items, est, administered, criterion, constr_fun) {
 
@@ -81,7 +81,7 @@
 
 
 # ------------------------------------------------------------------
-# Validação interna
+# Internal validation
 # ------------------------------------------------------------------
 
 #' Validate a shadow CAT constraint function (internal)

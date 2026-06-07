@@ -88,12 +88,12 @@ apply_exposure_control <- function(scores, available, exposure, n_administered) 
   if (all(exposure >= 1)) {
     k <- n_administered + 1L
 
-    # Fallback: se já administramos mais itens que o comprimento de exposure
+    # Fallback: more items administered than the length of exposure
     if (k > length(exposure)) {
       return(available[which.max(scores)])
     }
 
-    # Determinar n (número de top candidatos)
+    # Determine n (number of top candidates)
     n <- if (!is.na(exposure[k])) {
       as.integer(exposure[k])
     } else {

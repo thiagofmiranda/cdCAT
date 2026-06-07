@@ -14,12 +14,21 @@ Authors@R: c(
       role = "aut"
     )
   )
-Description: A session-based engine for Cognitive Diagnostic Computerized 
-    Adaptive Testing (CD-CAT). Supports DINA, DINO, and GDINA models with 
-    item selection criteria including KL, PWKL, MPWKL, and SHE. Provides 
-    MAP, MLE, and EAP attribute estimation, content balancing, exposure 
-    control, and shadow CAT via constraint functions. Designed for 
-    real-time item-by-item adaptive applications.
+Description: A session-based engine for cognitive diagnostic computerized
+    adaptive testing (CD-CAT), the application of adaptive testing to
+    cognitive diagnosis models. Three models are supported: the deterministic
+    inputs, noisy "and" gate (DINA), the deterministic inputs, noisy "or"
+    gate (DINO), and the generalized DINA (GDINA) model. Item selection
+    criteria include Kullback-Leibler (KL) information, posterior-weighted
+    Kullback-Leibler (PWKL), modified posterior-weighted Kullback-Leibler
+    (MPWKL), and Shannon entropy (SHE). Latent attribute profiles are
+    estimated by maximum likelihood estimation (MLE), maximum a posteriori
+    (MAP), or expected a posteriori (EAP). Content balancing, item exposure
+    control, and shadow testing are configurable through constraint
+    functions. The implemented methods follow Cheng (2009)
+    <doi:10.1007/s11336-009-9123-2> and de la Torre (2011)
+    <doi:10.1007/s11336-011-9207-7>. Designed for real-time, item-by-item
+    adaptive applications.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -1,0 +1,19 @@
+citHeader("To cite the cdCAT package in publications use:")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "{cdCAT}: Computerized Adaptive Testing with Cognitive Diagnostic Models",
+  author   = c(
+    person("Thiago", "Miranda"),
+    person("Bruno", "Silvestre")
+  ),
+  year     = "2026",
+  note     = sprintf("R package version %s", meta$Version),
+  url      = "https://github.com/thiagofmiranda/cdCAT",
+  textVersion = paste0(
+    "Miranda, T., & Silvestre, B. (2026). ",
+    "cdCAT: Computerized Adaptive Testing with Cognitive Diagnostic Models. ",
+    sprintf("R package version %s. ", meta$Version),
+    "https://github.com/thiagofmiranda/cdCAT"
+  )
+)

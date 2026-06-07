@@ -135,7 +135,7 @@ estimate_alpha <- function(responses, items, method = "MAP", prior = NULL) {
   prob_matrix  <- get_prob_matrix(Q, parameters, skill_patterns, items$model)
   answered_idx <- which(!is.na(responses))
 
-  # Sem respostas — retorna prior
+  # No responses -- return prior
   if (length(answered_idx) == 0) {
     alpha_hat_index <- which.max(prior)
     return(structure(

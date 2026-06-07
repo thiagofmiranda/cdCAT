@@ -100,12 +100,13 @@ build_skill_patterns <- function(K) {
 #' @references
 #' Tatsuoka, C. (2002).
 #' Data analytic methods for latent partially ordered classification models.
+#' \emph{Journal of the Royal Statistical Society Series C: Applied Statistics},
+#' \emph{51}(3), 337--350. \doi{10.1111/1467-9876.00272}
 #'
 #' Hsu, C. L., Wang, W. C., & Chen, S. Y. (2013).
-#' Variable-length computerized adaptive testing based on cognitive diagnosis models.
-#'
-#' Rupp, A. A., Templin, J., & Henson, R. (2010).
-#' Diagnostic Measurement: Theory, Methods, and Applications.
+#' Variable-length computerized adaptive testing based on cognitive diagnosis
+#' models. \emph{Applied Psychological Measurement}, \emph{37}(7), 563--582.
+#' \doi{10.1177/0146621613488642}
 #'
 #' @export
 check_stopping <- function(
@@ -116,7 +117,7 @@ check_stopping <- function(
     threshold = 0.8
 ) {
 
-  # --- Validação do threshold
+  # --- Threshold validation
   if (!is.numeric(threshold) || !length(threshold) %in% c(1L, 2L))
     stop("threshold must be a numeric vector of length 1 or 2.")
 
@@ -126,15 +127,15 @@ check_stopping <- function(
   if (length(threshold) == 2 && threshold[1] <= threshold[2])
     stop("For dual threshold, threshold[1] must be greater than threshold[2].")
 
-  # --- Ainda não atingiu o mínimo
+  # --- Minimum not reached yet
   if (n_administered < min_items)
     return(list(stop = FALSE, reason = "min_items not reached"))
 
-  # --- Atingiu o máximo
+  # --- Maximum reached
   if (n_administered >= max_items)
     return(list(stop = TRUE, reason = "max_items reached"))
 
-  # --- Regra posterior
+  # --- Posterior rule
   posterior       <- est$posterior
   skill_patterns  <- est$skill_patterns
 
@@ -143,18 +144,18 @@ check_stopping <- function(
 
   K <- ncol(skill_patterns)
 
-  # Probabilidade de domínio por atributo
+  # Mastery probability per attribute
   p_mastery <- sapply(seq_len(K), function(k) {
     sum(posterior[skill_patterns[, k] == 1])
   })
 
-  # Ordenar posterior para regras de threshold
+  # Sort posterior for threshold rules
   ord <- sort(posterior, decreasing = TRUE)
 
   if (length(threshold) == 1) {
 
-    # --- Regra 1: Single threshold (Tatsuoka, 2002; Hsu et al., 2013)
-    # Todos os atributos classificados com confiança >= threshold
+    # --- Rule 1: Single threshold (Tatsuoka, 2002; Hsu et al., 2013)
+    # All attributes classified with confidence >= threshold
     classified <- all(p_mastery >= threshold | p_mastery <= (1 - threshold))
 
     if (classified)
@@ -162,8 +163,8 @@ check_stopping <- function(
 
   } else {
 
-    # --- Regra 2: Dual threshold (Hsu et al., 2013)
-    # Maior posterior >= threshold[1] E segunda maior <= threshold[2]
+    # --- Rule 2: Dual threshold (Hsu et al., 2013)
+    # Largest posterior >= threshold[1] AND second largest <= threshold[2]
     second <- if (length(ord) >= 2) ord[2] else 0
 
     if (ord[1] >= threshold[1] && second <= threshold[2])

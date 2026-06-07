@@ -79,10 +79,6 @@ P(alpha_k = 1) for each attribute after this response.}
 \code{update()} call (or session start for the first item).}
 }
 }
-\references{
-Rupp, A. A., Templin, J., & Henson, R. (2010).
-Diagnostic Measurement: Theory, Methods, and Applications.
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{

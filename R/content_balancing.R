@@ -37,6 +37,7 @@
 #' Kingsbury, G. G., & Zara, A. R. (1991). A comparison of procedures
 #' for content-sensitive item selection in computerized adaptive
 #' testing. *Applied Measurement in Education*, 4(3), 241--261.
+#' \doi{10.1207/s15324818ame0403_4}
 #'
 #' @seealso [select_next_item()], [CdcatSession]
 #'

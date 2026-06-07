@@ -107,10 +107,11 @@ responses given the latent profile.
 \references{
 Tatsuoka, C. (2002).
 Data analytic methods for latent partially ordered classification models.
+\emph{Journal of the Royal Statistical Society Series C: Applied Statistics},
+\emph{51}(3), 337--350. \doi{10.1111/1467-9876.00272}
 
 Hsu, C. L., Wang, W. C., & Chen, S. Y. (2013).
-Variable-length computerized adaptive testing based on cognitive diagnosis models.
-
-Rupp, A. A., Templin, J., & Henson, R. (2010).
-Diagnostic Measurement: Theory, Methods, and Applications.
+Variable-length computerized adaptive testing based on cognitive diagnosis
+models. \emph{Applied Psychological Measurement}, \emph{37}(7), 563--582.
+\doi{10.1177/0146621613488642}
 }

@@ -50,3 +50,8 @@ about the latent profile induced by administering item \eqn{h}.
 
 Computational complexity per candidate item is \eqn{O(2^K)}.
 }
+\references{
+Shannon, C. E. (1948). A mathematical theory of communication.
+\emph{Bell System Technical Journal}, \emph{27}(3), 379--423.
+\doi{10.1002/j.1538-7305.1948.tb01338.x}
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/criteria.R
 \name{PWKL_criteria}
 \alias{PWKL_criteria}
-\title{Posterior-Weighted Kullback–Leibler (PWKL) Criterion}
+\title{Posterior-Weighted Kullback-Leibler (PWKL) Criterion}
 \usage{
 PWKL_criteria(item_index, alpha_hat_index, prob_matrix, posterior)
 }
@@ -54,4 +54,9 @@ Assumptions:
 }
 
 Computational complexity per candidate item is \eqn{O(2^K)}.
+}
+\references{
+Cheng, Y. (2009). When cognitive diagnosis meets computerized adaptive
+testing: CD-CAT. \emph{Psychometrika}, \emph{74}(4), 619--632.
+\doi{10.1007/s11336-009-9123-2}
 }

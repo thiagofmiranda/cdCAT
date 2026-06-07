@@ -28,7 +28,7 @@ The pattern names follow the same ordering as \code{\link[=build_skill_patterns]
 \code{expand.grid} with the first attribute varying fastest.
 }
 \examples{
-# K = 2: four profiles — "00", "10", "01", "11"
+# K = 2: four profiles -- "00", "10", "01", "11"
 prior <- cdcat_prior("00" = 0.4, "10" = 0.2, "01" = 0.2, "11" = 0.2)
 
 # Use in a session

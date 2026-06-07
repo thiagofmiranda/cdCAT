@@ -54,6 +54,7 @@ apply_content_balancing(3:6, c(1L, 2L), content, content_prop)
 Kingsbury, G. G., & Zara, A. R. (1991). A comparison of procedures
 for content-sensitive item selection in computerized adaptive
 testing. \emph{Applied Measurement in Education}, 4(3), 241--261.
+\doi{10.1207/s15324818ame0403_4}
 }
 \seealso{
 \code{\link[=select_next_item]{select_next_item()}}, \link{CdcatSession}

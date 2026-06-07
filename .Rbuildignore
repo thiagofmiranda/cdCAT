@@ -8,6 +8,7 @@
 ^\.github$
 ^refs$
 ^\.claude$
+^cran-comments\.md$
 ^data-raw$
 ^cache$
 ^figure$

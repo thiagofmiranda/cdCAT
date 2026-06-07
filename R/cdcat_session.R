@@ -75,10 +75,6 @@ NULL
 #'         `update()` call (or session start for the first item).}
 #' }
 #'
-#' @references
-#' Rupp, A. A., Templin, J., & Henson, R. (2010).
-#' Diagnostic Measurement: Theory, Methods, and Applications.
-#'
 #' @export
 CdcatSession <- R6::R6Class(
   classname = "CdcatSession",

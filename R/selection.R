@@ -58,13 +58,16 @@
 #' Kingsbury, G. G., & Zara, A. R. (1991). A comparison of procedures
 #' for content-sensitive item selection in computerized adaptive
 #' testing. *Applied Measurement in Education*, 4(3), 241--261.
+#' \doi{10.1207/s15324818ame0403_4}
 #'
-#' Sympson, J. B., & Hetter, R. D. (1985). *Controlling item-exposure
-#' rates in computerized adaptive testing*. Proceedings of the 27th
-#' annual meeting of the Military Testing Association (pp. 973--977).
+#' van der Linden, W. J., & Veldkamp, B. P. (2004). Constraining item
+#' exposure in computerized adaptive testing with shadow tests.
+#' *Journal of Educational and Behavioral Statistics*, 29(3), 273--291.
+#' \doi{10.3102/10769986029003273}
 #'
-#' van der Linden, W. J. (2005). *Linear models for optimal test design*.
-#' Springer.
+#' van der Linden, W. J. (2022). Review of the shadow-test approach to
+#' adaptive testing. *Behaviormetrika*, 49(2), 169--190.
+#' \doi{10.1007/s41237-021-00150-y}
 #'
 #' @seealso [apply_content_balancing()], [apply_exposure_control()],
 #'   [CdcatSession]

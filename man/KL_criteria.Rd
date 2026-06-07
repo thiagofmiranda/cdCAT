@@ -2,7 +2,7 @@
 % Please edit documentation in R/criteria.R
 \name{KL_criteria}
 \alias{KL_criteria}
-\title{Kullback–Leibler (KL) Information Criterion for CD-CAT}
+\title{Kullback-Leibler (KL) Information Criterion for CD-CAT}
 \usage{
 KL_criteria(item_index, alpha_hat_index, prob_matrix)
 }
@@ -18,11 +18,11 @@ containing item response probabilities P(X=1 | alpha).}
 Numeric scalar representing the KL information value.
 }
 \description{
-Computes the Kullback–Leibler (KL) information index for a candidate item
+Computes the Kullback-Leibler (KL) information index for a candidate item
 under a cognitive diagnosis computerized adaptive testing (CD-CAT) framework.
 }
 \details{
-This criterion selects the item that maximizes the Kullback–Leibler divergence
+This criterion selects the item that maximizes the Kullback-Leibler divergence
 between the item response distribution induced by the current estimated
 latent profile and the response distributions induced by all alternative
 latent profiles.

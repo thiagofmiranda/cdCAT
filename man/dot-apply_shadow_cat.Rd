@@ -18,10 +18,10 @@ indices.}
 
 \item{constr_fun}{A function with signature
 \verb{function(scores, items, administered)} that returns a single
-integer — the global index of the next item to administer.}
+integer -- the global index of the next item to administer.}
 }
 \value{
-Integer scalar — global index of the selected item.
+Integer scalar -- global index of the selected item.
 }
 \description{
 In shadow mode the full item bank is considered at every step.

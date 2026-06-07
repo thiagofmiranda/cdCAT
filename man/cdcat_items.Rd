@@ -67,7 +67,11 @@ All models assume:
 Junker, B. W., & Sijtsma, K. (2001).
 Cognitive assessment models with few assumptions, and connections with
 nonparametric item response theory.
+\emph{Applied Psychological Measurement}, \emph{25}(3), 258--272.
+\doi{10.1177/01466210122032064}
 
 de la Torre, J. (2011).
 The generalized DINA model framework.
+\emph{Psychometrika}, \emph{76}(2), 179--199.
+\doi{10.1007/s11336-011-9207-7}
 }

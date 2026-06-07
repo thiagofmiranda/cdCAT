@@ -1,9 +1,9 @@
-#' Kullback–Leibler (KL) Information Criterion for CD-CAT
+#' Kullback-Leibler (KL) Information Criterion for CD-CAT
 #'
-#' Computes the Kullback–Leibler (KL) information index for a candidate item
+#' Computes the Kullback-Leibler (KL) information index for a candidate item
 #' under a cognitive diagnosis computerized adaptive testing (CD-CAT) framework.
 #'
-#' This criterion selects the item that maximizes the Kullback–Leibler divergence
+#' This criterion selects the item that maximizes the Kullback-Leibler divergence
 #' between the item response distribution induced by the current estimated
 #' latent profile and the response distributions induced by all alternative
 #' latent profiles.
@@ -60,7 +60,7 @@ KL_criteria <- function(item_index, alpha_hat_index, prob_matrix) {
 }
 
 
-#' Posterior-Weighted Kullback–Leibler (PWKL) Criterion
+#' Posterior-Weighted Kullback-Leibler (PWKL) Criterion
 #'
 #' Computes the posterior-weighted KL information index for a candidate item
 #' in CD-CAT.
@@ -104,6 +104,12 @@ KL_criteria <- function(item_index, alpha_hat_index, prob_matrix) {
 #'   the 2^K latent profiles.
 #'
 #' @return Numeric scalar representing the PWKL information value.
+#'
+#' @references
+#' Cheng, Y. (2009). When cognitive diagnosis meets computerized adaptive
+#' testing: CD-CAT. \emph{Psychometrika}, \emph{74}(4), 619--632.
+#' \doi{10.1007/s11336-009-9123-2}
+#'
 #' @export
 PWKL_criteria <- function(item_index, alpha_hat_index, prob_matrix, posterior) {
 
@@ -119,7 +125,7 @@ PWKL_criteria <- function(item_index, alpha_hat_index, prob_matrix, posterior) {
 }
 
 
-#' Modified Posterior-Weighted Kullback–Leibler (MPWKL) Criterion
+#' Modified Posterior-Weighted Kullback-Leibler (MPWKL) Criterion
 #'
 #' Computes the symmetric posterior-weighted KL divergence across all
 #' pairs of item response distributions induced by latent profiles.
@@ -150,6 +156,12 @@ PWKL_criteria <- function(item_index, alpha_hat_index, prob_matrix, posterior) {
 #' @param posterior Numeric vector of posterior probabilities.
 #'
 #' @return Numeric scalar representing the MPWKL information value.
+#'
+#' @references
+#' Cheng, Y. (2009). When cognitive diagnosis meets computerized adaptive
+#' testing: CD-CAT. \emph{Psychometrika}, \emph{74}(4), 619--632.
+#' \doi{10.1007/s11336-009-9123-2}
+#'
 #' @export
 MPWKL_criteria <- function(item_index, prob_matrix, posterior) {
 
@@ -209,6 +221,12 @@ MPWKL_criteria <- function(item_index, prob_matrix, posterior) {
 #' @param posterior Numeric vector of posterior probabilities.
 #'
 #' @return Numeric scalar representing the expected posterior entropy.
+#'
+#' @references
+#' Shannon, C. E. (1948). A mathematical theory of communication.
+#' \emph{Bell System Technical Journal}, \emph{27}(3), 379--423.
+#' \doi{10.1002/j.1538-7305.1948.tb01338.x}
+#'
 #' @export
 SHE_criteria <- function(item_index, prob_matrix, posterior) {
 

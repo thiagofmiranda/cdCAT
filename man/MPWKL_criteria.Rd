@@ -2,7 +2,7 @@
 % Please edit documentation in R/criteria.R
 \name{MPWKL_criteria}
 \alias{MPWKL_criteria}
-\title{Modified Posterior-Weighted Kullback–Leibler (MPWKL) Criterion}
+\title{Modified Posterior-Weighted Kullback-Leibler (MPWKL) Criterion}
 \usage{
 MPWKL_criteria(item_index, prob_matrix, posterior)
 }
@@ -40,4 +40,9 @@ This formulation evaluates the expected global discrimination of the item
 under the full posterior distribution.
 
 Computational complexity per candidate item is \eqn{O((2^K)^2)}.
+}
+\references{
+Cheng, Y. (2009). When cognitive diagnosis meets computerized adaptive
+testing: CD-CAT. \emph{Psychometrika}, \emph{74}(4), 619--632.
+\doi{10.1007/s11336-009-9123-2}
 }
